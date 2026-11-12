@@ -168,10 +168,14 @@ gh release create "$tag" \
     --repo "$repo" --target main --title "Knightbar $version" --notes-file "$notes"
 
 step "Checking the published files"
-check="$(mktemp -d)"
-gh release download "$tag" --repo "$repo" --dir "$check"
-(cd "$check" && shasum -a 256 -c "Knightbar-$version.zip.sha256" "Knightbar-$version.dmg.sha256")
-rm -rf "$check"
+# GitHub records a SHA-256 digest of every uploaded file. Comparing it with the local checksums
+# proves the upload is intact without downloading the large files again.
+for file in "Knightbar-$version.zip" "Knightbar-$version.dmg"; do
+    expected="sha256:$(cut -d ' ' -f 1 "dist/$file.sha256")"
+    published="$(gh api "repos/$repo/releases/tags/$tag" --jq ".assets[] | select(.name == \"$file\") | .digest")"
+    [ "$published" = "$expected" ] || fail "$file on GitHub has digest '$published', expected $expected"
+    echo "$file: OK"
+done
 
 step "Updating the Homebrew cask"
 zip_sha="$(cut -d ' ' -f 1 "dist/Knightbar-$version.zip.sha256")"
