@@ -29,16 +29,29 @@ macOS 14 Sonoma or later, on Apple Silicon or Intel.
 
 ## Installation
 
-1. Download `Knightbar-<version>.zip` from the
-   [latest release](https://github.com/jonasgrau/knightbar/releases/latest) and unzip it.
-2. Move `Knightbar.app` to your Applications folder.
-3. Open it. Knightbar is not notarized by Apple yet, so macOS blocks the first launch:
+### Download
+
+1. Download `Knightbar-<version>.dmg` from the
+   [latest release](https://github.com/jonasgrau/knightbar/releases/latest), open it and drag
+   Knightbar into your Applications folder.
+2. Open it. Knightbar is not notarized by Apple yet, so macOS blocks the first launch:
    - Close the warning with **Done**.
    - Open **System Settings → Privacy & Security**, scroll down to **Security** and click
      **Open Anyway** next to the message about Knightbar.
    - Confirm with your password and click **Open**.
 
    This is only needed once.
+
+### Homebrew
+
+```sh
+brew tap jonasgrau/tap
+brew trust --cask jonasgrau/tap/knightbar   # Homebrew only loads casks from other taps once you trust them
+brew install --cask knightbar
+```
+
+The first launch needs the same **Open Anyway** step as above. Update with
+`brew upgrade --cask knightbar`.
 
 Knightbar has no Dock icon. Look for the knight in the menu bar.
 
@@ -47,10 +60,10 @@ especially while an app with many menus is in front. Switch to the Finder to mak
 remove some other menu bar items. On recent macOS versions, also check that Knightbar is
 allowed under **System Settings → Menu Bar**.
 
-To check the download, compare its checksum with the `.sha256` file of the release:
+To check a download, compare its checksum with the matching `.sha256` file of the release:
 
 ```sh
-shasum -a 256 Knightbar-<version>.zip
+shasum -a 256 Knightbar-<version>.dmg
 ```
 
 ## Privacy
@@ -88,7 +101,8 @@ the UCI engine client, puzzles, and the Lichess and Chess.com clients). Run its 
 cd ChessCore && swift test
 ```
 
-`./scripts/make-release.sh` builds a universal release and packs it as a `.zip` in `dist/`.
+`./scripts/make-release.sh` builds a universal release and packs it as a `.zip` (for Homebrew)
+and a `.dmg` in `dist/`.
 
 ## Credits and licence
 
