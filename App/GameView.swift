@@ -48,6 +48,10 @@ struct GameToolbar: View {
         ToolButton("Resign", symbol: "flag", action: model.resign)
             .disabled(model.game.status.isOver)
         ToolButton("Flip Board", symbol: "arrow.up.arrow.down") { model.isFlipped.toggle() }
-        ToolButton("Copy PGN", symbol: "doc.on.doc", action: model.copyPGN)
+        ToolButton("Analyze on Lichess", symbol: "magnifyingglass", action: model.analyzeOnLichess)
+            .disabled(model.game.moves.isEmpty)
+            .contextMenu {
+                Button("Copy PGN", action: model.copyPGN)
+            }
     }
 }

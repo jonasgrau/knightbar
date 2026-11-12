@@ -112,6 +112,12 @@ final class GameModel: BoardModel {
         requestEngineMoveIfNeeded()
     }
 
+    /// Opens the game on the Lichess analysis board in the browser, seen from the player's side.
+    func analyzeOnLichess() {
+        let orientation: PieceColor = playsComputer ? playerColor : (isFlipped ? .black : .white)
+        NSWorkspace.shared.open(game.lichessAnalysisURL(orientation: orientation))
+    }
+
     func copyPGN() {
         let date = Date.now.formatted(.iso8601.year().month().day().dateSeparator(.omitted))
         let dotted = [date.prefix(4), date.dropFirst(4).prefix(2), date.suffix(2)].joined(separator: ".")
