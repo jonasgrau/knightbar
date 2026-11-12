@@ -105,6 +105,9 @@ cd ChessCore && swift test
 `./scripts/make-release.sh` builds a universal release and packs it as a `.zip` (for Homebrew)
 and a `.dmg` in `dist/`.
 
+`./scripts/publish-release.sh <version>` does the whole release: version bump, tests, build,
+GitHub release and Homebrew cask update. Try it first with `--dry-run`.
+
 ## Credits and licence
 
 Knightbar is free software under the [GNU General Public License v3.0](LICENSE).
