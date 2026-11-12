@@ -22,6 +22,7 @@ A dot on the knight tells you when it is your move on Lichess or Chess.com.
 - **Chess.com daily games:** enter your username and Knightbar lists the games in which it is
   your move. A click opens the game on chess.com.
 - **Menu bar dot and optional notifications** when it is your move on Lichess or Chess.com.
+- **Opens at login** if you like, so the dot is always there (Settings → Open at login).
 - Two players on one board, flip the board, click-click or drag-and-drop moves.
 
 ## Requirements

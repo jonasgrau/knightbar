@@ -1,4 +1,5 @@
 import ChessCore
+import ServiceManagement
 import SwiftUI
 
 /// Settings for games and puzzles, laid over the board.
@@ -7,6 +8,9 @@ struct SettingsView: View {
     @Bindable var puzzles: PuzzleModel
     @Bindable var lichess: LichessModel
     let onDone: () -> Void
+    /// Read from the system each time Settings opens, because it can also be changed in System Settings.
+    @State private var loginState = LaunchAtLogin().state
+    @State private var loginError: String?
 
     var body: some View {
         ZStack {
@@ -60,11 +64,25 @@ struct SettingsView: View {
                     .pickerStyle(.segmented)
                 }
 
-                HStack {
-                    Toggle("Notify when it is my move", isOn: $lichess.notifiesOnMove)
-                    Spacer()
-                    Button("Done", action: onDone)
-                        .keyboardShortcut(.defaultAction)
+                VStack(alignment: .leading, spacing: 6) {
+                    Toggle("Open at login", isOn: launchAtLoginBinding)
+                    if let note = loginNote {
+                        HStack(spacing: 4) {
+                            Text(note)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .fixedSize(horizontal: false, vertical: true)
+                            if loginState == .needsApproval {
+                                Button("Open") { SMAppService.openSystemSettingsLoginItems() }
+                            }
+                        }
+                    }
+                    HStack {
+                        Toggle("Notify when it is my move", isOn: $lichess.notifiesOnMove)
+                        Spacer()
+                        Button("Done", action: onDone)
+                            .keyboardShortcut(.defaultAction)
+                    }
                 }
             }
             .controlSize(.small)
@@ -74,6 +92,29 @@ struct SettingsView: View {
             .shadow(radius: 8)
         }
         .onExitCommand(perform: onDone)
+        .onAppear { loginState = LaunchAtLogin().state }
+    }
+
+    private var launchAtLoginBinding: Binding<Bool> {
+        Binding {
+            loginState == .on || loginState == .needsApproval
+        } set: { enabled in
+            do {
+                loginState = try LaunchAtLogin().setEnabled(enabled)
+                loginError = nil
+            } catch {
+                loginState = LaunchAtLogin().state
+                loginError = "macOS did not accept this. Is Knightbar in the Applications folder?"
+            }
+        }
+    }
+
+    private var loginNote: String? {
+        if let loginError { return loginError }
+        switch loginState {
+        case .needsApproval: return "Allow Knightbar under Login Items in System Settings."
+        case .on, .off: return nil
+        }
     }
 
     private func row(_ title: String, @ViewBuilder content: () -> some View) -> some View {
