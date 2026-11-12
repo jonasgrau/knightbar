@@ -1,0 +1,8 @@
+// The app's visible name is defined only here. It ends up as CFBundleDisplayName and
+// CFBundleName in Info.plist and determines the file name of the app bundle.
+// Code reads it at runtime through AppInfo.displayName.
+APP_DISPLAY_NAME = Knightbar
+
+// Reverse-DNS identifier based on the GitHub account. It also names the Lichess login
+// redirect scheme, the keychain entry and the folders for saved games and caches.
+APP_BUNDLE_IDENTIFIER = io.github.jonasgrau.Knightbar
