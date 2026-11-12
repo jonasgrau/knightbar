@@ -1,0 +1,42 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test-and-build:
+    name: Test and build
+    runs-on: macos-26
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Show the toolchain
+        run: |
+          xcodebuild -version
+          swift --version
+
+      # The official Stockfish release is about 80 MB, so keep it between runs.
+      - name: Cache Stockfish
+        uses: actions/cache@v6
+        with:
+          path: Vendor/stockfish
+          key: stockfish-${{ hashFiles('scripts/fetch-stockfish.sh') }}
+
+      - name: Download Stockfish
+        run: ./scripts/fetch-stockfish.sh
+
+      # With Stockfish in place, the tests against the real engine run as well.
+      - name: Run the ChessCore tests
+        working-directory: ChessCore
+        run: swift test
+
+      - name: Build the app for Apple Silicon and Intel
+        run: >
+          xcodebuild -project Knightbar.xcodeproj -scheme Knightbar -configuration Release
+          -destination "generic/platform=macOS" ONLY_ACTIVE_ARCH=NO build

@@ -1,5 +1,7 @@
 # Knightbar
 
+[![Tests](https://github.com/jonasgrau/knightbar/actions/workflows/tests.yml/badge.svg)](https://github.com/jonasgrau/knightbar/actions/workflows/tests.yml)
+
 Chess in your Mac's menu bar. Click the knight and a small board opens: play against
 Stockfish, solve the daily puzzle, or make your move in a Lichess correspondence game.
 A dot on the knight tells you when it is your move on Lichess or Chess.com.
