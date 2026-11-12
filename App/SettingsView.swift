@@ -7,6 +7,7 @@ struct SettingsView: View {
     @Bindable var game: GameModel
     @Bindable var puzzles: PuzzleModel
     @Bindable var lichess: LichessModel
+    @Bindable var updates: UpdateModel
     let onDone: () -> Void
     /// Read from the system each time Settings opens, because it can also be changed in System Settings.
     @State private var loginState = LaunchAtLogin().state
@@ -19,7 +20,7 @@ struct SettingsView: View {
                 .onTapGesture(perform: onDone)
                 .accessibilityHidden(true)
 
-            VStack(alignment: .leading, spacing: 10) {
+            VStack(alignment: .leading, spacing: 6) {
                 row("Opponent") {
                     Picker("Opponent", selection: $game.settings.opponent) {
                         Text("Computer").tag(MatchSettings.Opponent.computer)
@@ -77,8 +78,20 @@ struct SettingsView: View {
                             }
                         }
                     }
-                    HStack {
-                        Toggle("Notify when it is my move", isOn: $lichess.notifiesOnMove)
+                    Toggle("Notify when it is my move", isOn: $lichess.notifiesOnMove)
+                    Toggle("Check for updates automatically", isOn: $updates.checksAutomatically)
+                    updateLine
+                    HStack(spacing: 6) {
+                        Text("Version \(updates.currentVersion?.description ?? "?")")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Button("Check Now", action: updates.checkNow)
+                            .disabled(updates.isChecking)
+                        if updates.isChecking {
+                            ProgressView()
+                                .controlSize(.small)
+                                .scaleEffect(0.6)
+                        }
                         Spacer()
                         Button("Done", action: onDone)
                             .keyboardShortcut(.defaultAction)
@@ -86,13 +99,41 @@ struct SettingsView: View {
                 }
             }
             .controlSize(.small)
-            .padding(14)
+            .padding(12)
             .frame(width: 280)
             .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 10))
             .shadow(radius: 8)
         }
         .onExitCommand(perform: onDone)
         .onAppear { loginState = LaunchAtLogin().state }
+    }
+
+    /// What the last check found: a newer version with the way to get it, or the result of "Check Now".
+    @ViewBuilder
+    private var updateLine: some View {
+        if let available = updates.available {
+            HStack(spacing: 4) {
+                Image(systemName: "arrow.down.circle.fill")
+                    .foregroundStyle(Color.accentColor)
+                if let command = updates.upgradeCommand {
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text("Version \(available.version.description) is out. Update with:")
+                        Text(command)
+                            .font(.caption.monospaced())
+                            .textSelection(.enabled)
+                    }
+                } else {
+                    Text("Version \(available.version.description) is available.")
+                    Button("Download", action: updates.openReleasePage)
+                }
+            }
+            .font(.caption)
+            .fixedSize(horizontal: false, vertical: true)
+        } else if let message = updates.message {
+            Text(message)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
     }
 
     private var launchAtLoginBinding: Binding<Bool> {

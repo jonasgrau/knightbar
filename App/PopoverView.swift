@@ -10,6 +10,7 @@ struct PopoverView: View {
     let puzzles: PuzzleModel
     let lichess: LichessModel
     let chessCom: ChessComModel
+    let updates: UpdateModel
     @AppStorage("mode") private var mode = AppMode.play
     @State private var showsSettings = false
 
@@ -43,7 +44,7 @@ struct PopoverView: View {
             }
             .overlay {
                 if showsSettings {
-                    SettingsView(game: game, puzzles: puzzles, lichess: lichess) { showsSettings = false }
+                    SettingsView(game: game, puzzles: puzzles, lichess: lichess, updates: updates) { showsSettings = false }
                 }
             }
 
@@ -54,7 +55,18 @@ struct PopoverView: View {
                 case .online: OnlineToolbar(lichess: lichess, chessCom: chessCom)
                 }
                 Spacer()
-                ToolButton("Settings", symbol: "gearshape") { showsSettings.toggle() }
+                ToolButton(updates.available == nil ? "Settings" : "Settings – update available", symbol: "gearshape") {
+                    showsSettings.toggle()
+                }
+                .overlay(alignment: .topTrailing) {
+                    if updates.available != nil {
+                        Circle()
+                            .fill(Color.accentColor)
+                            .frame(width: 7, height: 7)
+                            .offset(x: 2, y: -2)
+                            .allowsHitTesting(false)
+                    }
+                }
                 ToolButton("Quit \(AppInfo.displayName)", symbol: "power") {
                     NSApplication.shared.terminate(nil)
                 }

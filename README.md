@@ -25,6 +25,8 @@ A dot on the knight tells you when it is your move on Lichess or Chess.com.
   your move. A click opens the game on chess.com.
 - **Menu bar dot and optional notifications** when it is your move on Lichess or Chess.com.
 - **Opens at login** if you like, so the dot is always there (Settings → Open at login).
+- **Tells you about new versions:** a dot on the settings gear and a download link, or the
+  `brew upgrade` command if you installed with Homebrew.
 - Two players on one board, flip the board, click-click or drag-and-drop moves.
 
 ## Requirements
@@ -79,6 +81,9 @@ Knightbar collects no data and has no telemetry. It only talks to:
   keychain; **Log Out of Lichess** revokes it.
 - **api.chess.com** for the daily puzzle and the list of your daily games where it is your
   move. No login, only your public username.
+- **api.github.com** once a day to see whether a newer Knightbar release exists. Nothing is
+  sent besides the request itself. Turn it off under Settings → Check for updates
+  automatically.
 
 Games, settings and the list of solved puzzles stay on your Mac.
 
