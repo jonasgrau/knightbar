@@ -57,12 +57,12 @@ final class UpdateModel {
     }
 
     static var bundleVersion: AppVersion? {
-        (Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String).flatMap(AppVersion.init)
+        AppInfo.version.flatMap(AppVersion.init)
     }
 
     static var defaultChecker: UpdateChecker {
         UpdateChecker(repository: "jonasgrau/knightbar",
-                      userAgent: "\(AppInfo.displayName)/\(bundleVersion?.description ?? "0")")
+                      userAgent: AppInfo.userAgent)
     }
 
     /// The command for Homebrew installs, `nil` for downloads.

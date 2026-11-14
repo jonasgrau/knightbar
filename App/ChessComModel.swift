@@ -34,7 +34,6 @@ final class ChessComModel {
     private var fetchTask: Task<Void, Never>?
 
     private static let usernameKey = "chessComUsername"
-    private static let notifyKey = "lichessNotifyOnMove"
 
     init(client: ChessComClient = ChessComModel.defaultClient, defaults: UserDefaults = .standard,
          notify: @escaping @MainActor (String) -> Void = MoveNotifier.notifyChessComMove, pollInterval: Duration = .seconds(300)) {
@@ -51,8 +50,7 @@ final class ChessComModel {
     }
 
     static var defaultClient: ChessComClient {
-        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0"
-        return ChessComClient(userAgent: "\(AppInfo.displayName)/\(version)")
+        ChessComClient(userAgent: AppInfo.userAgent)
     }
 
     var hasUsername: Bool { !username.trimmingCharacters(in: .whitespaces).isEmpty }
@@ -83,7 +81,7 @@ final class ChessComModel {
                 guard !Task.isCancelled, username == self.username else { return }
                 // Games that have appeared since the last check are new turns. The first answer is not news.
                 let known = Set(games.map(\.id))
-                if hasLoaded, defaults.bool(forKey: Self.notifyKey) {
+                if hasLoaded, defaults.bool(forKey: AppInfo.moveNotificationsKey) {
                     for game in latest where !known.contains(game.id) { notify(game.id) }
                 }
                 games = latest

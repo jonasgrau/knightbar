@@ -69,6 +69,11 @@ private actor TestTransport: HTTPTransport {
 
 @main
 struct LichessModelRegression {
+    private struct NoStoredToken: TokenStore {
+        func load() -> String? { nil }
+        func save(_ token: String) {}
+        func delete() {}
+    }
     struct Failure: Error, CustomStringConvertible { let description: String }
 
     @MainActor
@@ -85,7 +90,42 @@ struct LichessModelRegression {
         for response in TestTransport.MoveResponse.allCases {
             try await notificationsFollowServerMoves(response)
         }
+        try await notificationPreferenceIsShared()
         print("LichessModel notification regressions passed.")
+    }
+
+    @MainActor
+    private static func notificationPreferenceIsShared() async throws {
+        let suite = "Knightbar.SharedNotificationRegression.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suite)!
+        defer { defaults.removePersistentDomain(forName: suite) }
+        // Seed the existing on-disk key to guard compatibility with installed versions.
+        defaults.set(true, forKey: "lichessNotifyOnMove")
+        defaults.set("shared-user", forKey: "chessComUsername")
+        let lichess = LichessModel(tokens: NoStoredToken(), authenticator: UnusedAuthenticator(),
+                                   defaults: defaults, requestNotificationPermission: { true }, notify: { _, _ in })
+        try requireRegression(lichess.notifiesOnMove, "Existing notification preference was not loaded")
+        let transport = ControlledHTTPTransport()
+        var notifications: [String] = []
+        let chessCom = ChessComModel(client: ChessComClient(transport: transport, userAgent: "RegressionTest"),
+                                     defaults: defaults, notify: { notifications.append($0) })
+        let path = "/pub/player/shared-user/games/to-move"
+        for index in 1...3 {
+            if index > 1 {
+                lichess.notifiesOnMove = index == 3
+                chessCom.refresh()
+            }
+            try await waitForRegression("Chess.com refresh \(index)") { await transport.count(path) == index }
+            await transport.reply(path, body: #"{"games":[{"url":"https://www.chess.com/game/daily/\#(index)"}]}"#)
+            try await waitForRegression("Chess.com result \(index)") { !chessCom.isLoading }
+            try requireRegression(notifications == (index == 3 ? ["3"] : []),
+                                  "Chess.com did not follow the shared notification toggle")
+        }
+        lichess.notifiesOnMove = false
+        try requireRegression(!defaults.bool(forKey: "lichessNotifyOnMove"), "Existing notification key was not updated")
+        chessCom.username = ""
+        await transport.finish()
+        print("PASS: existing notification preference and shared Lichess/Chess.com toggle")
     }
 
     @MainActor

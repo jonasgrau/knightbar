@@ -22,7 +22,7 @@ final class LichessModel: BoardModel {
     var notifiesOnMove: Bool {
         didSet {
             guard notifiesOnMove != oldValue else { return }
-            defaults.set(notifiesOnMove, forKey: Self.notifyKey)
+            defaults.set(notifiesOnMove, forKey: AppInfo.moveNotificationsKey)
             if notifiesOnMove {
                 Task { if await !requestNotificationPermission() { notifiesOnMove = false } }
             }
@@ -43,7 +43,6 @@ final class LichessModel: BoardModel {
     private var sentMoveCount: Int?
     private var isSendingMove: Bool { sentMoveCount != nil }
 
-    private static let notifyKey = "lichessNotifyOnMove"
     private static let accountKey = "lichessAccount"
 
     init(client: LichessClient = LichessModel.defaultClient,
@@ -58,7 +57,7 @@ final class LichessModel: BoardModel {
         self.defaults = defaults
         self.requestNotificationPermission = requestNotificationPermission
         self.notify = notify
-        notifiesOnMove = defaults.bool(forKey: Self.notifyKey)
+        notifiesOnMove = defaults.bool(forKey: AppInfo.moveNotificationsKey)
 
         // With a stored token the user stays logged in across launches.
         if let token = tokens.load() {
@@ -72,8 +71,7 @@ final class LichessModel: BoardModel {
     }
 
     static var defaultClient: LichessClient {
-        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0"
-        return LichessClient(userAgent: "\(AppInfo.displayName)/\(version)")
+        LichessClient(userAgent: AppInfo.userAgent)
     }
 
     /// Whether the menu bar icon should show its dot.

@@ -45,8 +45,7 @@ final class PuzzleModel: BoardModel {
     }
 
     static var defaultClient: PuzzleClient {
-        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0"
-        return PuzzleClient(userAgent: "\(AppInfo.displayName)/\(version)")
+        PuzzleClient(userAgent: AppInfo.userAgent)
     }
 
     static var defaultCache: PuzzleCache {

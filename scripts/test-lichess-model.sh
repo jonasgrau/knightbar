@@ -14,7 +14,7 @@ swiftc -swift-version 6 -parse-as-library \
   -I "$build_dir" -L "$build_dir" -lChessCore \
   -Xlinker -rpath -Xlinker "$build_dir" \
   App/BoardView.swift App/PieceImage.swift App/AppInfo.swift \
-  App/LichessModel.swift App/LichessServices.swift \
+  App/LichessModel.swift App/LichessServices.swift App/ChessComModel.swift \
   ChessCore/Tests/ChessCoreTests/Fixtures/LichessFixtures.swift \
-  tests/LichessModelRegression.swift -o "$build_dir/lichess-model-tests"
+  tests/ControlledHTTPTransport.swift tests/LichessModelRegression.swift -o "$build_dir/lichess-model-tests"
 "$build_dir/lichess-model-tests"
