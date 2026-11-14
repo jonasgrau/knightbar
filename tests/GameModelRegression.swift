@@ -10,6 +10,7 @@ struct GameModelRegression {
             try await engineFailureRecovery(action: action)
         }
         try gamePGNRegressions()
+        try newGameSafetyRegressions()
         print("GameModel engine failure regressions passed.")
     }
 
