@@ -57,15 +57,18 @@ extension HTTPTransport {
 
 public struct URLSessionTransport: HTTPTransport {
     private let session: URLSession
-    private let streamSession: URLSession
 
-    public init(session: URLSession = .shared) {
-        self.session = session
+    /// Created on first use and shared by all transports; only streaming clients need it.
+    private static let streamSession: URLSession = {
         // Lichess sends a keep-alive line every 7 seconds. A stream that stays silent for
         // 30 seconds is dead and fails, so that the caller can reconnect.
         let configuration = URLSessionConfiguration.default
         configuration.timeoutIntervalForRequest = 30
-        streamSession = URLSession(configuration: configuration)
+        return URLSession(configuration: configuration)
+    }()
+
+    public init(session: URLSession = .shared) {
+        self.session = session
     }
 
     private func urlRequest(_ request: HTTPRequest) -> URLRequest {
@@ -87,7 +90,7 @@ public struct URLSessionTransport: HTTPTransport {
     }
 
     public func stream(_ request: HTTPRequest) async throws -> HTTPStream {
-        let (bytes, response) = try await streamSession.bytes(for: urlRequest(request))
+        let (bytes, response) = try await Self.streamSession.bytes(for: urlRequest(request))
         let lines = AsyncThrowingStream<String, any Error> { continuation in
             let task = Task {
                 do {
