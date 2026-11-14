@@ -18,6 +18,12 @@ final class LichessModel: BoardModel {
     private(set) var session: BoardSession?
     /// The latest problem to tell the user about.
     private(set) var message: String?
+    var challengeUsername = ""
+    var challengeDays = 3
+    var challengeColor: PieceColor?
+    private(set) var isSendingChallenge = false
+    private(set) var challengeError: String?
+    private(set) var challengeSuccess: String?
     var isFlipped = false
     var notifiesOnMove: Bool {
         didSet {
@@ -368,10 +374,24 @@ final class LichessModel: BoardModel {
     }
 
     /// Challenges `username` to an unrated correspondence game.
-    func challenge(username: String, daysPerMove: Int, color: PieceColor?) {
-        let name = username.trimmingCharacters(in: .whitespaces)
-        guard !name.isEmpty else { return }
-        run { try await $0.challenge(user: name, daysPerMove: daysPerMove, color: color) }
+    func sendChallenge() async {
+        let name = challengeUsername.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !name.isEmpty, !isSendingChallenge else { return }
+        isSendingChallenge = true
+        challengeError = nil
+        challengeSuccess = nil
+        defer { isSendingChallenge = false }
+        do {
+            try await client.challenge(user: name, daysPerMove: challengeDays, color: challengeColor)
+            challengeUsername = ""
+            challengeSuccess = "Challenge sent to \(name)."
+        } catch LichessError.unauthorized {
+            forgetLogin()
+            challengeError = "Your Lichess login has expired. Please log in again."
+            message = challengeError
+        } catch {
+            challengeError = Self.text(for: error)
+        }
     }
 
     func openInBrowser() {

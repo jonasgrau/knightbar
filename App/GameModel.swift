@@ -18,6 +18,7 @@ final class GameModel: BoardModel {
     /// Set when the engine could not be started or stopped answering.
     private(set) var engineFailed = false
     var confirmsNewGame = false
+    private var isApplyingSetup = false
 
     private let store: SavedGameStore
     private let defaults: UserDefaults
@@ -63,6 +64,11 @@ final class GameModel: BoardModel {
     var checkedKingSquare: Square? { session.checkedKingSquare }
     var hintSquares: [Square] { [] }
     var playsComputer: Bool { settings.opponent == .computer }
+    var matchSummary: String {
+        playsComputer
+            ? "Stockfish · Level \(settings.strength.level) · You play \(playerColor == .white ? "White" : "Black")"
+            : "Two players · Local game"
+    }
 
     // MARK: - Board input
 
@@ -118,6 +124,14 @@ final class GameModel: BoardModel {
         gameChanged()
     }
 
+    /// Apply the setup only after the player explicitly starts (or replaces) a game.
+    func startNewGame(settings: MatchSettings) {
+        isApplyingSetup = true
+        self.settings = settings
+        isApplyingSetup = false
+        newGame()
+    }
+
     func retryEngine() {
         engineFailed = false
         requestEngineMoveIfNeeded()
@@ -156,6 +170,7 @@ final class GameModel: BoardModel {
         if let data = try? JSONEncoder().encode(settings) {
             defaults.set(data, forKey: Self.settingsKey)
         }
+        guard !isApplyingSetup else { return }
         // "Random" keeps the current colour; it is drawn again with the next new game.
         if settings.colorChoice != old.colorChoice, settings.colorChoice != .random {
             playerColor = settings.colorChoice.resolved()

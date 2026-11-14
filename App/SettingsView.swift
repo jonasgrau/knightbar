@@ -2,9 +2,8 @@ import ChessCore
 import ServiceManagement
 import SwiftUI
 
-/// Settings for games and puzzles, laid over the board.
+/// App and puzzle preferences; match setup lives under New Game.
 struct SettingsView: View {
-    @Bindable var game: GameModel
     @Bindable var puzzles: PuzzleModel
     @Bindable var lichess: LichessModel
     @Bindable var updates: UpdateModel
@@ -24,8 +23,6 @@ struct SettingsView: View {
                 VStack(spacing: 0) {
                     ScrollView {
                         VStack(alignment: .leading, spacing: 12) {
-                            settingsSection("Game") { gameSettings }
-                            Divider()
                             settingsSection("Puzzle") { puzzleSettings }
                             Divider()
                             settingsSection("App") { appSettings }
@@ -55,46 +52,6 @@ struct SettingsView: View {
         }
         .onExitCommand(perform: onDone)
         .onAppear { loginState = LaunchAtLogin().state }
-    }
-
-    private var gameSettings: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            row("Opponent") {
-                Picker("Opponent", selection: $game.settings.opponent) {
-                    Text("Computer").tag(MatchSettings.Opponent.computer)
-                    Text("Two Players").tag(MatchSettings.Opponent.human)
-                }
-                .pickerStyle(.segmented)
-            }
-
-            Group {
-                row("Level") {
-                    Picker("Level", selection: $game.settings.strength) {
-                        ForEach(Array(EngineStrength.levels), id: \.self) { level in
-                            let strength = EngineStrength(level: level)
-                            Text(Self.label(for: strength)).tag(strength)
-                        }
-                    }
-                }
-                row("Play as") {
-                    Picker("Play as", selection: $game.settings.colorChoice) {
-                        Text("White").tag(MatchSettings.ColorChoice.white)
-                        Text("Black").tag(MatchSettings.ColorChoice.black)
-                        Text("Random").tag(MatchSettings.ColorChoice.random)
-                    }
-                    .pickerStyle(.segmented)
-                }
-                row("Time per move") {
-                    Picker("Time per move", selection: $game.settings.moveTime) {
-                        ForEach(MatchSettings.moveTimes, id: \.self) { seconds in
-                            Text("\(seconds.formatted(.number.locale(Locale(identifier: "en_US")))) s").tag(seconds)
-                        }
-                    }
-                    .pickerStyle(.segmented)
-                }
-            }
-            .disabled(!game.playsComputer)
-        }
     }
 
     private var puzzleSettings: some View {
@@ -211,11 +168,4 @@ struct SettingsView: View {
         }
     }
 
-    static func label(for strength: EngineStrength) -> String {
-        if let elo = strength.elo {
-            "Level \(strength.level) – about \(elo) Elo"
-        } else {
-            "Level \(strength.level) – full strength"
-        }
-    }
 }

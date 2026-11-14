@@ -40,10 +40,7 @@ struct PuzzleStatus: View {
     let model: PuzzleModel
 
     var body: some View {
-        Text(model.statusText)
-            .font(.callout.weight(.medium))
-            .lineLimit(1)
-            .minimumScaleFactor(0.8)
+        StatusMessage(text: model.statusText)
             .help(model.session?.puzzle.title ?? "")
         if model.session?.state == .solved {
             Image(systemName: "checkmark.circle.fill")
@@ -61,9 +58,14 @@ struct PuzzleToolbar: View {
             .disabled(model.session?.state != .solving)
         ToolButton("Start Over", symbol: "arrow.counterclockwise", action: model.startOver)
             .disabled(model.session == nil)
-        ToolButton("Flip Board", symbol: "arrow.up.arrow.down") { model.isFlipped.toggle() }
-        ToolButton(model.source == .lichess ? "Open on Lichess" : "Open on Chess.com", symbol: "safari",
+        Menu("Puzzle") {
+            Button("Flip Board") { model.isFlipped.toggle() }
+            Button(model.source == .lichess ? "Open on Lichess" : "Open on Chess.com",
                    action: model.openInBrowser)
-            .disabled(model.session == nil)
+                .disabled(model.session == nil)
+        }
+        .menuStyle(.borderlessButton)
+        .fixedSize()
+        .help("Puzzle actions")
     }
 }

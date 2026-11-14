@@ -22,46 +22,59 @@ struct GameStatus: View {
     let model: GameModel
 
     var body: some View {
-        Text(model.statusText)
-            .font(.callout.weight(.medium))
-            .lineLimit(1)
-            .minimumScaleFactor(0.8)
-        if model.isThinking {
-            ProgressView()
-                .controlSize(.small)
-                .scaleEffect(0.7)
-        }
-        if model.playsComputer && model.engineFailed {
-            Button("Retry", action: model.retryEngine)
-                .controlSize(.small)
+        VStack(alignment: .leading, spacing: 4) {
+            HStack(alignment: .firstTextBaseline, spacing: 6) {
+                StatusMessage(text: model.statusText,
+                              isError: model.playsComputer && model.engineFailed && !model.game.status.isOver)
+                if model.isThinking {
+                    ProgressView().controlSize(.small).scaleEffect(0.7)
+                }
+                if model.playsComputer && model.engineFailed && !model.game.status.isOver {
+                    Button("Retry", action: model.retryEngine).controlSize(.small)
+                }
+            }
+            Text(model.matchSummary)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
         }
     }
 }
 
 struct GameToolbar: View {
     @Bindable var model: GameModel
+    @State private var showsSetup = false
+    @State private var setup = MatchSettings()
 
     var body: some View {
-        Button("New Game", action: model.requestNewGame)
+        Button("New Game") {
+            setup = model.settings
+            showsSetup = true
+        }
             .fixedSize()
-            .confirmationDialog("Start a new game?", isPresented: $model.confirmsNewGame, titleVisibility: .visible) {
-                Button("Start New Game", role: .destructive, action: model.newGame)
-                Button("Cancel", role: .cancel) {}
-            } message: {
-                Text("Your current game will be replaced. This cannot be undone.")
+            .popover(isPresented: $showsSetup) {
+                NewGameSetup(settings: $setup,
+                             replacesGame: !model.game.moves.isEmpty && !model.game.status.isOver,
+                             onCancel: { showsSetup = false }) {
+                    model.startNewGame(settings: setup)
+                    showsSetup = false
+                }
             }
         ToolButton("Take Back Move", symbol: "arrow.uturn.backward", action: model.undo)
             .disabled(!model.session.canUndo)
-        ToolButton("Resign", symbol: "flag", action: model.resign)
-            .disabled(model.game.status.isOver)
-        ToolButton("Flip Board", symbol: "arrow.up.arrow.down") { model.isFlipped.toggle() }
-        Menu("Tools") {
+        Menu("Game") {
+            Button("Flip Board") { model.isFlipped.toggle() }
+            Divider()
             Button("Analyze on Lichess", action: model.analyzeOnLichess)
+                .disabled(model.game.moves.isEmpty)
             Button("Copy PGN", action: model.copyPGN)
+                .disabled(model.game.moves.isEmpty)
+            Divider()
+            Button("Resign", role: .destructive, action: model.resign)
+                .disabled(model.game.status.isOver)
         }
         .menuStyle(.borderlessButton)
         .fixedSize()
-        .disabled(model.game.moves.isEmpty)
-        .help("Analyze on Lichess or copy PGN")
+        .help("Game actions, analysis and export")
     }
 }

@@ -13,8 +13,9 @@ A dot on the knight tells you when it is your move on Lichess or Chess.com.
 ## Features
 
 - **Play against the computer.** Stockfish 19 at eight levels, from about 1320 Elo to full
-  strength. Choose your colour and the engine's thinking time. Take back moves, resign, and
-  open the game on the Lichess analysis board or copy its PGN from the Tools menu.
+  strength. Choose opponent, level, colour and thinking time under **New Game**;
+  your current opponent and level stay visible above the board. Take back moves, resign, and
+  open the game on the Lichess analysis board or copy its PGN from the Game menu.
   The game is saved after every move and continues after a restart.
 - **Daily puzzle** from Lichess or Chess.com. Wrong moves are rejected, a hint shows the piece
   and then the move, and solved puzzles are remembered.

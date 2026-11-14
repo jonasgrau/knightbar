@@ -87,11 +87,47 @@ struct LichessModelRegression {
 
     @MainActor
     static func main() async throws {
+        try await challengeDraftSurvivesFailure()
         for response in TestTransport.MoveResponse.allCases {
             try await notificationsFollowServerMoves(response)
         }
         try await notificationPreferenceIsShared()
         print("LichessModel notification regressions passed.")
+    }
+
+    @MainActor
+    private static func challengeDraftSurvivesFailure() async throws {
+        let suite = "Knightbar.ChallengeDraft.\(UUID())"
+        let defaults = UserDefaults(suiteName: suite)!
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let transport = ControlledHTTPTransport()
+        let client = LichessClient(transport: transport, userAgent: "RegressionTest")
+        await client.setToken("test-token")
+        let model = LichessModel(client: client,
+                                 tokens: NoStoredToken(), authenticator: UnusedAuthenticator(), defaults: defaults)
+        model.challengeUsername = "friend"
+        model.challengeDays = 7
+        model.challengeColor = .black
+        let path = "/api/challenge/friend"
+        let first = Task { await model.sendChallenge() }
+        try await waitForRegression("challenge request") { await transport.count(path) == 1 }
+        try requireRegression(model.isSendingChallenge, "Missing pending challenge state")
+        await model.sendChallenge()
+        try requireRegression(await transport.count(path) == 1, "Duplicate challenge was sent")
+        await transport.fail(path)
+        await first.value
+        try requireRegression(model.challengeUsername == "friend" && model.challengeDays == 7 && model.challengeColor == .black,
+                              "Failed challenge discarded the form")
+        try requireRegression(model.challengeError != nil && !model.isSendingChallenge,
+                              "Challenge failure did not allow retry")
+        let retry = Task { await model.sendChallenge() }
+        try await waitForRegression("challenge retry") { await transport.count(path) == 2 }
+        await transport.reply(path, body: #"{"challenge":{"id":"test"}}"#)
+        await retry.value
+        try requireRegression(model.challengeUsername.isEmpty && model.challengeError == nil && model.challengeSuccess != nil,
+                              "Successful challenge did not clear the name and confirm success")
+        await transport.finish()
+        print("PASS: challenge failure retains draft, duplicate guard and successful retry")
     }
 
     @MainActor

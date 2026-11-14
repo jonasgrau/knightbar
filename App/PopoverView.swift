@@ -1,10 +1,6 @@
 import SwiftUI
 
-enum AppMode: String {
-    case play, puzzle, online
-}
-
-/// Content of the popover: status line with the mode switch, board and toolbar.
+/// Content of the popover: mode switch, full-width status, board and toolbar.
 struct PopoverView: View {
     let game: GameModel
     let puzzles: PuzzleModel
@@ -16,24 +12,13 @@ struct PopoverView: View {
 
     var body: some View {
         VStack(spacing: 8) {
-            HStack(spacing: 6) {
+            PopoverHeader(mode: $mode) {
                 switch mode {
                 case .play: GameStatus(model: game)
                 case .puzzle: PuzzleStatus(model: puzzles)
                 case .online: OnlineStatus(lichess: lichess, chessCom: chessCom)
                 }
-                Spacer(minLength: 4)
-                Picker("Mode", selection: $mode) {
-                    Text("Play").tag(AppMode.play)
-                    Text("Puzzle").tag(AppMode.puzzle)
-                    Text("Online").tag(AppMode.online)
-                }
-                .pickerStyle(.segmented)
-                .labelsHidden()
-                .fixedSize()
-                .controlSize(.small)
             }
-            .frame(height: 22)
 
             Group {
                 switch mode {
@@ -42,9 +27,10 @@ struct PopoverView: View {
                 case .online: OnlineBoard(lichess: lichess, chessCom: chessCom)
                 }
             }
+            .frame(width: 320, height: 320)
             .overlay {
                 if showsSettings {
-                    SettingsView(game: game, puzzles: puzzles, lichess: lichess, updates: updates) { showsSettings = false }
+                    SettingsView(puzzles: puzzles, lichess: lichess, updates: updates) { showsSettings = false }
                 }
             }
 
@@ -55,9 +41,22 @@ struct PopoverView: View {
                 case .online: OnlineToolbar(lichess: lichess, chessCom: chessCom)
                 }
                 Spacer()
-                ToolButton(updates.available == nil ? "Settings" : "Settings – update available", symbol: "gearshape") {
-                    showsSettings.toggle()
+                Menu {
+                    Button(updates.available == nil ? "Settings…" : "Settings… – update available") {
+                        showsSettings.toggle()
+                    }
+                    Divider()
+                    Button("Quit \(AppInfo.displayName)") {
+                        NSApplication.shared.terminate(nil)
+                    }
+                } label: {
+                    Image(systemName: "gearshape")
+                        .frame(width: 16)
                 }
+                .menuStyle(.borderlessButton)
+                .fixedSize()
+                .help(updates.available == nil ? "App menu" : "App menu – update available")
+                .accessibilityLabel("App menu")
                 .overlay(alignment: .topTrailing) {
                     if updates.available != nil {
                         Circle()
@@ -67,15 +66,12 @@ struct PopoverView: View {
                             .allowsHitTesting(false)
                     }
                 }
-                ToolButton("Quit \(AppInfo.displayName)", symbol: "power") {
-                    NSApplication.shared.terminate(nil)
-                }
             }
             .controlSize(.small)
             .frame(height: 22)
         }
         .padding(10)
-        .frame(width: 340, height: 400)
+        .frame(width: 340)
         .task(id: mode) {
             if mode == .puzzle { puzzles.refreshIfNeeded() }
         }

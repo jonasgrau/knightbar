@@ -12,6 +12,12 @@ func newGameSafetyRegressions() throws {
         try? FileManager.default.removeItem(at: folder)
     }
     let model = GameModel(store: store, defaults: defaults)
+    var setup = model.settings
+    setup.opponent = .human
+    setup.strength = EngineStrength(level: 5)
+    model.startNewGame(settings: setup)
+    try requireRegression(model.settings == setup && !model.playsComputer,
+                          "New Game did not apply the selected opponent and strength")
     model.settings.opponent = .human
     model.requestNewGame()
     try requireRegression(!model.confirmsNewGame && model.game.moves.isEmpty,
@@ -44,5 +50,14 @@ func newGameSafetyRegressions() throws {
     model.requestNewGame()
     try requireRegression(!model.confirmsNewGame && model.game.moves.isEmpty,
                           "A finished game should restart immediately")
-    print("PASS: fresh, active, cancelled, restored, confirmed, and finished New Game flows")
+    model.move(from: Square("e2")!, to: Square("e4")!)
+    setup.strength = EngineStrength(level: 8)
+    setup.colorChoice = .black
+    model.startNewGame(settings: setup)
+    try requireRegression(model.game.moves.isEmpty && model.settings == setup && model.playerColor == .black,
+                          "Starting with a new setup did not replace the active game and apply its choices")
+    let restarted = GameModel(store: store, defaults: defaults)
+    try requireRegression(restarted.settings == setup && restarted.playerColor == .black && restarted.game.moves.isEmpty,
+                          "New-game setup was not retained after restoring")
+    print("PASS: fresh, active, cancelled, restored, confirmed, finished and configured New Game flows")
 }

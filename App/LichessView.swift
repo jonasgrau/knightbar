@@ -103,37 +103,41 @@ struct LichessSection: View {
 
 /// The form for challenging another Lichess player to a correspondence game.
 struct LichessChallengeForm: View {
-    let model: LichessModel
-    @State private var friend = ""
-    @State private var days = 3
-    @State private var color: PieceColor?
+    @Bindable var model: LichessModel
 
     private static let dayChoices = [1, 2, 3, 5, 7, 10, 14]
 
     var body: some View {
         OnlineGroup(title: "Challenge a friend on Lichess") {
-            TextField("Lichess username", text: $friend)
+            TextField("Lichess username", text: $model.challengeUsername)
                 .textFieldStyle(.roundedBorder)
                 .onSubmit(sendChallenge)
             HStack {
-                Picker("Days per move", selection: $days) {
+                Picker("Days per move", selection: $model.challengeDays) {
                     ForEach(Self.dayChoices, id: \.self) { Text("\($0) day\($0 == 1 ? "" : "s") per move").tag($0) }
                 }
-                Picker("Your colour", selection: $color) {
+                Picker("Your colour", selection: $model.challengeColor) {
                     Text("Random").tag(PieceColor?.none)
                     Text("White").tag(PieceColor?.some(.white))
                     Text("Black").tag(PieceColor?.some(.black))
                 }
             }
             .labelsHidden()
-            Button("Send Challenge", action: sendChallenge)
-                .disabled(friend.trimmingCharacters(in: .whitespaces).isEmpty)
+            Button(model.isSendingChallenge ? "Sending…" : "Send Challenge", action: sendChallenge)
+                .disabled(model.challengeUsername.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            if let error = model.challengeError {
+                StatusMessage(text: error, isError: true)
+            } else if let success = model.challengeSuccess {
+                Text(success)
+                    .font(.caption)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         }
+        .disabled(model.isSendingChallenge)
     }
 
     private func sendChallenge() {
-        model.challenge(username: friend, daysPerMove: days, color: color)
-        friend = ""
+        Task { await model.sendChallenge() }
     }
 }
 
@@ -156,18 +160,23 @@ struct LichessGameToolbar: View {
             Button("Cancel") { confirmsResign = false }
         } else {
             let isOver = model.openGame?.result != nil || model.openGame == nil
-            ToolButton("Resign", symbol: "flag") { confirmsResign = true }
-                .disabled(isOver)
             if model.openGame?.opponentOffersDraw == true {
                 Button("Accept Draw", action: model.offerOrAcceptDraw)
                 ToolButton("Decline Draw", symbol: "xmark", action: model.declineDraw)
-            } else {
-                ToolButton(model.openGame?.iOfferDraw == true ? "Draw Offered" : "Offer Draw", symbol: "equal",
-                           action: model.offerOrAcceptDraw)
-                    .disabled(isOver || model.openGame?.iOfferDraw == true)
             }
-            ToolButton("Flip Board", symbol: "arrow.up.arrow.down") { model.isFlipped.toggle() }
-            ToolButton("Open on Lichess", symbol: "safari", action: model.openInBrowser)
+            Menu("Game") {
+                Button("Flip Board") { model.isFlipped.toggle() }
+                Button("Open on Lichess", action: model.openInBrowser)
+                Divider()
+                Button(model.openGame?.iOfferDraw == true ? "Draw Offered" : "Offer Draw",
+                       action: model.offerOrAcceptDraw)
+                    .disabled(isOver || model.openGame?.iOfferDraw == true || model.openGame?.opponentOffersDraw == true)
+                Button("Resign…", role: .destructive) { confirmsResign = true }
+                    .disabled(isOver)
+            }
+            .menuStyle(.borderlessButton)
+            .fixedSize()
+            .help("Online game actions")
         }
     }
 }

@@ -63,8 +63,7 @@ private struct ChessComSection: View {
             }
 
             if let message = model.message {
-                Text(message)
-                    .foregroundStyle(.secondary)
+                StatusMessage(text: message, isError: true)
             } else if !model.hasUsername {
                 Text("Enter your username to see where it is your move.")
                     .foregroundStyle(.secondary)
@@ -115,11 +114,7 @@ struct OnlineStatus: View {
     }
 
     var body: some View {
-        Text(text)
-            .font(.callout.weight(.medium))
-            .lineLimit(1)
-            .minimumScaleFactor(0.7)
-            .help(text)
+        StatusMessage(text: text, isError: lichess.message != nil)
         if lichess.isSigningIn || (lichess.openGameInfo != nil && lichess.openGame == nil) {
             ProgressView()
                 .controlSize(.small)
@@ -141,7 +136,11 @@ struct OnlineToolbar: View {
                 Task { await lichess.refreshGames() }
             }
             if lichess.account != nil {
-                Button("Log Out of Lichess", action: lichess.signOut)
+                Menu("Account") {
+                    Button("Log Out of Lichess", action: lichess.signOut)
+                }
+                .menuStyle(.borderlessButton)
+                .fixedSize()
             }
         }
     }
