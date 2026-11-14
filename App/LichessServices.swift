@@ -111,8 +111,12 @@ enum MenuBarIcon {
     /// The menu bar image, with a dot at the top right when the user is to move somewhere.
     @MainActor
     static func image(showsDot: Bool) -> NSImage {
+        showsDot ? withDot : (NSImage(named: "MenuBarIcon") ?? NSImage())
+    }
+
+    @MainActor
+    private static let withDot: NSImage = {
         let knight = NSImage(named: "MenuBarIcon") ?? NSImage()
-        guard showsDot else { return knight }
         let size = NSSize(width: knight.size.width + 5, height: knight.size.height)
         // Drawn right away rather than in a drawing handler, which AppKit may call on any thread.
         let scale = 2
@@ -133,5 +137,5 @@ enum MenuBarIcon {
         image.addRepresentation(bitmap)
         image.isTemplate = true
         return image
-    }
+    }()
 }
