@@ -215,10 +215,10 @@ final class LichessModel: BoardModel {
     }
 
     /// Changes the overview and notifies about games in which the opponent has just moved.
-    private func updateOverview(_ change: (inout LichessOverview) -> Void) {
+    private func updateOverview(notifying: Bool = true, _ change: (inout LichessOverview) -> Void) {
         let wasMyTurn = Dictionary(overview.games.map { ($0.id, $0.isMyTurn) }, uniquingKeysWith: { first, _ in first })
         change(&overview)
-        guard notifiesOnMove else { return }
+        guard notifying && notifiesOnMove else { return }
         // Only a game that was known to be waiting for the opponent counts. Games that show up
         // for the first time, for example at launch, do not trigger a notification.
         for game in overview.games where game.isPlayableHere && game.isMyTurn && wasMyTurn[game.id] == false {
@@ -269,14 +269,14 @@ final class LichessModel: BoardModel {
     }
 
     /// Puts the position Lichess reports on the board.
-    private func showServerState() {
+    private func showServerState(notifying: Bool = true) {
         guard let game = openGame else { return }
         // While a move is on its way, the board is already one move ahead of Lichess.
         if let sentMoveCount {
             guard game.game.moves.count >= sentMoveCount || game.result != nil else { return }
             self.sentMoveCount = nil
         }
-        updateOverview { $0.setMyTurn(game.isMyTurn, inGame: game.id) }
+        updateOverview(notifying: notifying) { $0.setMyTurn(game.isMyTurn, inGame: game.id) }
         if session?.game.moves != game.game.moves || session?.humanColors != humanColors(in: game) {
             session = BoardSession(game: game.game, humanColors: humanColors(in: game))
         }
@@ -334,10 +334,10 @@ final class LichessModel: BoardModel {
             } catch {
                 guard openGame?.id == game.id else { return }
                 message = "The move was not sent. \(Self.text(for: error))"
-                // Back to what Lichess knows.
+                // Restoring our turn after a failed send is not an opponent move.
                 sentMoveCount = nil
                 self.session = nil
-                showServerState()
+                showServerState(notifying: false)
             }
         }
     }
