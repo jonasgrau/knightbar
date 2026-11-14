@@ -23,9 +23,11 @@ struct SettingsView: View {
 
                 VStack(spacing: 0) {
                     ScrollView {
-                        VStack(alignment: .leading, spacing: 16) {
+                        VStack(alignment: .leading, spacing: 12) {
                             settingsSection("Game") { gameSettings }
+                            Divider()
                             settingsSection("Puzzle") { puzzleSettings }
+                            Divider()
                             settingsSection("App") { appSettings }
                         }
                         .padding(12)
