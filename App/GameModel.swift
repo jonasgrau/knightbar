@@ -101,6 +101,7 @@ final class GameModel: BoardModel {
 
     func newGame() {
         cancelSearch()
+        engineFailed = false
         playerColor = settings.colorChoice.resolved()
         session.newGame(humanColors: settings.humanColors(playingAs: playerColor))
         isFlipped = playsComputer && playerColor == .black
@@ -135,6 +136,7 @@ final class GameModel: BoardModel {
 
     private func settingsChanged(from old: MatchSettings) {
         guard settings != old else { return }
+        if settings.opponent != old.opponent { engineFailed = false }
         if let data = try? JSONEncoder().encode(settings) {
             defaults.set(data, forKey: Self.settingsKey)
         }
@@ -227,7 +229,7 @@ final class GameModel: BoardModel {
         func name(_ color: PieceColor) -> String { color == .white ? "White" : "Black" }
         switch game.status {
         case .ongoing:
-            if engineFailed { return "Computer is unavailable" }
+            if playsComputer && engineFailed { return "Computer is unavailable" }
             if isThinking { return "Computer is thinking…" }
             let check = position.isInCheck ? " – check" : ""
             return (playsComputer ? "Your move" : "\(name(position.sideToMove)) to move") + check

@@ -45,6 +45,9 @@ jobs:
       - name: Check Chess.com request switching
         run: bash scripts/test-chesscom-model.sh
 
+      - name: Check game model regressions
+        run: bash scripts/test-game-model.sh
+
       - name: Build the app for Apple Silicon and Intel
         run: >
           xcodebuild -project Knightbar.xcodeproj -scheme Knightbar -configuration Release

@@ -31,7 +31,7 @@ struct GameStatus: View {
                 .controlSize(.small)
                 .scaleEffect(0.7)
         }
-        if model.engineFailed {
+        if model.playsComputer && model.engineFailed {
             Button("Retry", action: model.retryEngine)
                 .controlSize(.small)
         }
