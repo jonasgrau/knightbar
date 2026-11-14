@@ -110,6 +110,10 @@ the UCI engine client, puzzles, and the Lichess and Chess.com clients). Run its 
 cd ChessCore && swift test
 ```
 
+To measure long-game restoration in Release mode, run
+`bash scripts/benchmark-replay.sh`. See the [replay performance baseline](docs/benchmarks/replay.md)
+for workloads, results, and measurement limits.
+
 `./scripts/make-release.sh` builds a universal release and packs it as a `.zip` (for Homebrew)
 and a `.dmg` in `dist/`.
 
