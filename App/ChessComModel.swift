@@ -9,6 +9,9 @@ final class ChessComModel {
     var username: String {
         didSet {
             guard username != oldValue else { return }
+            fetchTask?.cancel()
+            fetchTask = nil
+            isLoading = false
             defaults.set(username, forKey: Self.usernameKey)
             games = []
             message = nil
@@ -28,6 +31,7 @@ final class ChessComModel {
     private var lastCheck: Date?
     private var hasLoaded = false
     private var pollTask: Task<Void, Never>?
+    private var fetchTask: Task<Void, Never>?
 
     private static let usernameKey = "chessComUsername"
     private static let notifyKey = "lichessNotifyOnMove"
@@ -66,11 +70,17 @@ final class ChessComModel {
         guard hasUsername, !isLoading else { return }
         let username = username
         isLoading = true
-        Task {
-            defer { isLoading = false }
+        fetchTask = Task {
+            defer {
+                // A cancelled fetch must not clear the replacement's loading state.
+                if !Task.isCancelled {
+                    isLoading = false
+                    fetchTask = nil
+                }
+            }
             do {
                 let latest = try await client.gamesToMove(for: username)
-                guard username == self.username else { return }
+                guard !Task.isCancelled, username == self.username else { return }
                 // Games that have appeared since the last check are new turns. The first answer is not news.
                 let known = Set(games.map(\.id))
                 if hasLoaded, defaults.bool(forKey: Self.notifyKey) {
@@ -81,7 +91,7 @@ final class ChessComModel {
                 hasLoaded = true
                 lastCheck = .now
             } catch let error as ChessComError {
-                guard username == self.username else { return }
+                guard !Task.isCancelled, username == self.username else { return }
                 switch error {
                 case .userNotFound:
                     games = []
@@ -96,6 +106,7 @@ final class ChessComModel {
                     message = "Chess.com sent an unexpected answer."
                 }
             } catch {
+                guard !Task.isCancelled, username == self.username else { return }
                 message = "Chess.com sent an unexpected answer."
             }
         }
