@@ -15,5 +15,7 @@ swiftc -swift-version 6 -parse-as-library \
   -I "$build_dir" -L "$build_dir" -lChessCore \
   -Xlinker -rpath -Xlinker "$build_dir" \
   App/AppInfo.swift App/BoardView.swift App/PieceImage.swift App/PuzzleModel.swift \
+  ChessCore/Tests/ChessCoreTests/Fixtures/PuzzleFixtures.swift \
+  tests/ControlledHTTPTransport.swift tests/PuzzleFetchRegression.swift \
   tests/PuzzleModelRegression.swift -o "$build_dir/puzzle-model-tests"
 "$build_dir/puzzle-model-tests"

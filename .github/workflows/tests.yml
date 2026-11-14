@@ -36,7 +36,7 @@ jobs:
         working-directory: ChessCore
         run: swift test
 
-      - name: Check puzzle solve persistence
+      - name: Check puzzle model regressions
         run: bash scripts/test-puzzle-model.sh
 
       - name: Check Lichess move notifications

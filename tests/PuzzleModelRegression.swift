@@ -13,6 +13,7 @@ struct PuzzleModelRegression {
         for moveCount in [1, 3, 2] {
             try await solvedPuzzleSurvivesReload(moveCount: moveCount)
         }
+        try await puzzleFetchRegressions()
         print("PuzzleModel persistence regressions passed (solver and opponent endings).")
     }
 

@@ -14,6 +14,9 @@ final class PuzzleModel: BoardModel {
     var source: Puzzle.Source {
         didSet {
             guard source != oldValue else { return }
+            fetchTask?.cancel()
+            fetchTask = nil
+            isLoading = false
             defaults.set(source.rawValue, forKey: Self.sourceKey)
             session = nil
             loadError = nil
@@ -26,6 +29,7 @@ final class PuzzleModel: BoardModel {
     private let cache: PuzzleCache
     private let defaults: UserDefaults
     private var replyTask: Task<Void, Never>?
+    private var fetchTask: Task<Void, Never>?
 
     private static let sourceKey = "puzzleSource"
     private static let solvedKey = "solvedPuzzles"
@@ -63,10 +67,17 @@ final class PuzzleModel: BoardModel {
         guard !isLoading, entry?.isFresh(at: .now) != true else { return }
 
         isLoading = true
-        Task {
-            defer { isLoading = false }
+        fetchTask = Task {
+            defer {
+                // A cancelled fetch must not clear the replacement's loading state.
+                if !Task.isCancelled {
+                    isLoading = false
+                    fetchTask = nil
+                }
+            }
             do {
                 let data = try await client.dailyPuzzleData(from: source)
+                guard !Task.isCancelled else { return }
                 let puzzle = try Puzzle(source: source, data: data)
                 try? cache.store(data, for: source, fetchedAt: .now)
                 guard source == self.source else { return }
@@ -74,7 +85,7 @@ final class PuzzleModel: BoardModel {
                 // Keep the attempt in progress if the puzzle of the day has not changed.
                 if session?.puzzle.id != puzzle.id { show(puzzle) }
             } catch {
-                guard source == self.source else { return }
+                guard !Task.isCancelled, source == self.source else { return }
                 loadError = Self.message(for: error)
             }
         }
