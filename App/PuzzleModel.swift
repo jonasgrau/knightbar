@@ -146,6 +146,7 @@ final class PuzzleModel: BoardModel {
                 replyTask = nil
                 guard !Task.isCancelled else { return }
                 self.session?.playReply()
+                attemptFinished()
             }
         case .solved:
             guard !solved.contains(session.puzzle) else { return }

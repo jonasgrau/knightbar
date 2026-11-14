@@ -36,6 +36,9 @@ jobs:
         working-directory: ChessCore
         run: swift test
 
+      - name: Check puzzle solve persistence
+        run: bash scripts/test-puzzle-model.sh
+
       - name: Build the app for Apple Silicon and Intel
         run: >
           xcodebuild -project Knightbar.xcodeproj -scheme Knightbar -configuration Release
