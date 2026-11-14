@@ -186,7 +186,7 @@ struct SettingsView: View {
                 loginError = nil
             } catch {
                 loginState = LaunchAtLogin().state
-                loginError = "macOS did not accept this. Is Knightbar in the Applications folder?"
+                loginError = "macOS did not accept this. Is \(AppInfo.displayName) in the Applications folder?"
             }
         }
     }
@@ -194,7 +194,7 @@ struct SettingsView: View {
     private var loginNote: String? {
         if let loginError { return loginError }
         switch loginState {
-        case .needsApproval: return "Allow Knightbar under Login Items in System Settings."
+        case .needsApproval: return "Allow \(AppInfo.displayName) under Login Items in System Settings."
         case .on, .off: return nil
         }
     }

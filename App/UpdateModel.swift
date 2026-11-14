@@ -96,7 +96,7 @@ final class UpdateModel {
                 available = update
                 defaults.set(update?.version.description, forKey: Self.availableVersionKey)
                 defaults.set(update?.url.absoluteString, forKey: Self.availableURLKey)
-                if reportResult, update == nil { message = "Knightbar is up to date." }
+                if reportResult, update == nil { message = "\(AppInfo.displayName) is up to date." }
             } catch let error as UpdateCheckError {
                 // Automatic checks fail silently and try again later.
                 guard reportResult else { return }
