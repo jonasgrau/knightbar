@@ -9,6 +9,7 @@ struct GameModelRegression {
         for action in ["new game", "two players", "opponent switch"] {
             try await engineFailureRecovery(action: action)
         }
+        try gamePGNRegressions()
         print("GameModel engine failure regressions passed.")
     }
 

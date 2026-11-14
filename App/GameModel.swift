@@ -120,16 +120,22 @@ final class GameModel: BoardModel {
     }
 
     func copyPGN() {
-        let date = Date.now.formatted(.iso8601.year().month().day().dateSeparator(.omitted))
-        let dotted = [date.prefix(4), date.dropFirst(4).prefix(2), date.suffix(2)].joined(separator: ".")
-        var tags = ["Event": AppInfo.displayName, "Date": dotted]
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(pgn(), forType: .string)
+    }
+
+    /// Builds the exported game without writing to the clipboard.
+    func pgn(at instant: Date = .now, timeZone: TimeZone = .current) -> String {
+        let date = instant.formatted(Date.VerbatimFormatStyle(
+            format: "\(year: .defaultDigits).\(month: .twoDigits).\(day: .twoDigits)",
+            timeZone: timeZone, calendar: Calendar(identifier: .gregorian)))
+        var tags = ["Event": AppInfo.displayName, "Date": date]
         if playsComputer {
             let computer = "Stockfish level \(settings.strength.level)"
             tags["White"] = playerColor == .white ? "Player" : computer
             tags["Black"] = playerColor == .black ? "Player" : computer
         }
-        NSPasteboard.general.clearContents()
-        NSPasteboard.general.setString(game.pgn(tags: tags), forType: .string)
+        return game.pgn(tags: tags)
     }
 
     // MARK: - Settings and persistence
