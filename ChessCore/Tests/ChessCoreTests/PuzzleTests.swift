@@ -225,6 +225,16 @@ import Testing
         #expect(session.state == .awaitingReply)
     }
 
+    @Test func illegalPromotionPieceIsIgnored() throws {
+        let json = #"{"title": "t", "url": "https://www.chess.com/daily/2026-01-03", "publish_time": 1, "fen": "8/P7/8/8/8/8/7k/K7 w - - 0 1", "pgn": "[FEN \"8/P7/8/8/8/8/7k/K7 w - - 0 1\"]\n\n1. a8=R Kg3 2. Rg8+ *"}"#
+        var session = PuzzleSession(puzzle: try Puzzle(chessComJSON: Data(json.utf8)))
+        session.move(from: sq("a7"), to: sq("a8"))
+        session.promote(to: .king)
+        #expect(session.mistakes == 0)
+        #expect(session.state == .solving)
+        #expect(session.position == session.puzzle.position)
+    }
+
     @Test func firstHintMarksThePieceAndTheSecondShowsTheMove() throws {
         var session = try chessComSession()
         #expect(session.hint == nil)

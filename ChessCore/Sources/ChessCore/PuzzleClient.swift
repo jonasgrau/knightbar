@@ -71,9 +71,10 @@ public struct PuzzleCache: Sendable {
             self.fetchedAt = fetchedAt
         }
 
-        /// A response is not fetched again within 15 minutes.
+        /// A response is not fetched again within 15 minutes. One stamped in the future, because
+        /// the clock was set back since, is stale.
         public func isFresh(at date: Date) -> Bool {
-            date.timeIntervalSince(fetchedAt) < 15 * 60
+            fetchedAt <= date && date.timeIntervalSince(fetchedAt) < 15 * 60
         }
     }
 

@@ -45,6 +45,11 @@ import ChessCore
         "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR x KQkq - 0 1", // side to move
         "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KXkq - 0 1", // castling
         "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq e5 0 1", // En passant
+        "4k3/8/8/3Pn3/8/8/8/4K3 w - e6 0 1",                       // en passant: knight, not pawn, on e5
+        "4k3/8/8/3P4/8/8/8/4K3 w - e6 0 1",                        // en passant: no pawn on e5
+        "4k3/4p3/8/3Pp3/8/8/8/4K3 w - e6 0 1",                     // en passant: e7 not empty
+        "4k3/8/4n3/3Pp3/8/8/8/4K3 w - e6 0 1",                     // en passant: e6 not empty
+        "4k3/8/8/8/3pP3/4N3/8/4K3 b - e3 0 1",                     // en passant: e3 not empty
         "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - x 1", // halfmove clock
         "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 0", // move number
         "rnbq1bnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQ - 0 1",   // no black king

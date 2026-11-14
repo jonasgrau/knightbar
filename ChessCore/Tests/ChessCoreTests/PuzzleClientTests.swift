@@ -96,6 +96,13 @@ final class TestClock: @unchecked Sendable {
         #expect(!entry.isFresh(at: fetched.addingTimeInterval(15 * 60)))
     }
 
+    @Test func entryFetchedInTheFutureIsNotFresh() {
+        // The clock was ahead when the puzzle was fetched and has been set back since.
+        let now = Date(timeIntervalSince1970: 1_800_000_000)
+        let entry = PuzzleCache.Entry(data: Data(), fetchedAt: now.addingTimeInterval(60 * 60))
+        #expect(!entry.isFresh(at: now))
+    }
+
     @Test func unreadableCacheFileCountsAsMissing() throws {
         let folder = temporaryFolder()
         defer { try? FileManager.default.removeItem(at: folder) }

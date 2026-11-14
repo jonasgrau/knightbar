@@ -137,6 +137,19 @@ import Testing
         #expect(transport.requests.count == 2)
     }
 
+    @Test func requestQueuedBehindATooManyRequestsAnswerIsNotSent() async throws {
+        // The pause must start before the next queued request goes out. Repeated because the
+        // order in which the two requests resume is not fixed.
+        for run in 0..<1000 {
+            let transport = FakeHTTPTransport([status(429), ok()])
+            let client = await client(transport, clock: TestClock())
+            async let first: Void = client.resign(game: "a")
+            async let second: Void = client.resign(game: "b")
+            _ = await (try? first, try? second)
+            try #require(transport.requests.count == 1, "run \(run): \(transport.requests.map(\.url.path))")
+        }
+    }
+
     @Test func eventStreamDeliversDecodedEvents() async throws {
         let transport = FakeHTTPTransport(streams: [.init(lines: [LichessFixtures.gameStart, "", LichessFixtures.challenge])])
         var events: [LichessEvent] = []

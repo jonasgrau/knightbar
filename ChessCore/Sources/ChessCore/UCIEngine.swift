@@ -49,11 +49,18 @@ public actor UCIEngine {
                 await self?.streamEnded()
             }
         }
-        _ = try await request("uci", until: { $0 == "uciok" }, within: timeout)
-        try await waitUntilReady()
+        do {
+            _ = try await request("uci", until: { $0 == "uciok" }, within: timeout)
+            try await waitUntilReady()
+        } catch {
+            // The caller drops an engine that failed to start, so end its process here.
+            close()
+            throw error
+        }
     }
 
     public func setStrength(_ strength: EngineStrength) async throws {
+        try ensureIdle()
         for option in strength.uciOptions {
             try send("setoption name \(option.name) value \(option.value)")
         }
@@ -66,6 +73,7 @@ public actor UCIEngine {
         if !moves.isEmpty {
             position += " moves " + moves.map(\.uci).joined(separator: " ")
         }
+        try ensureIdle()
         try send(position)
 
         let (seconds, attoseconds) = moveTime.components
@@ -110,6 +118,13 @@ public actor UCIEngine {
 
     private func waitUntilReady() async throws {
         _ = try await request("isready", until: { $0 == "readyok" }, within: timeout)
+    }
+
+    /// Throws before anything is sent, so a refused command leaves the engine unchanged.
+    /// UCI forbids most commands while the engine is searching.
+    private func ensureIdle() throws {
+        guard !isClosed else { throw EngineError.terminated }
+        guard waiter == nil else { throw EngineError.busy }
     }
 
     private func send(_ command: String) throws {

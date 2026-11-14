@@ -167,17 +167,18 @@ public actor LichessClient {
         let task = Task { () throws -> HTTPResponse in
             await previous?.value
             let request = try self.request(method, path, form: form, authorized: authorized)
+            let response: HTTPResponse
             do {
-                return try await transport.send(request)
+                response = try await transport.send(request)
             } catch {
                 throw LichessError.offline
             }
+            // Checked inside the task so that a 429 pauses the next queued request.
+            try self.check(status: response.status, body: response.body)
+            return response
         }
         lastRequest = Task { _ = await task.result }
-
-        let response = try await task.value
-        try check(status: response.status, body: response.body)
-        return response
+        return try await task.value
     }
 
     private func check(status: Int, body: Data) throws {

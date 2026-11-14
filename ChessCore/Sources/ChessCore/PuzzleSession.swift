@@ -107,6 +107,8 @@ public struct PuzzleSession: Sendable {
 
     @discardableResult
     private mutating func attempt(_ move: Move) -> Bool {
+        // promote(to:) accepts any piece kind, so the move may not be legal at all.
+        guard position.isLegal(move) else { return false }
         let expected = puzzle.solution[progress]
         let mates = position.applying(move).isCheckmate
         guard move == expected || mates else {

@@ -13,6 +13,12 @@ public struct EngineStrength: Hashable, Sendable, Codable {
         self.level = min(max(level, Self.levels.lowerBound), Self.levels.upperBound)
     }
 
+    /// Clamps a stored level, too, so damaged settings cannot crash `elo`.
+    public init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.init(level: try container.decode(Int.self, forKey: .level))
+    }
+
     /// The Elo limit, or `nil` for full strength.
     public var elo: Int? {
         level <= Self.ratings.count ? Self.ratings[level - 1] : nil

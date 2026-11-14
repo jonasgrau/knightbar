@@ -211,6 +211,14 @@ import Testing
         let data = try JSONEncoder().encode(settings)
         #expect(try JSONDecoder().decode(MatchSettings.self, from: data) == settings)
     }
+
+    @Test func decodedStrengthOutsideTheLevelsIsClamped() throws {
+        let low = try JSONDecoder().decode(EngineStrength.self, from: Data(#"{"level": 0}"#.utf8))
+        let high = try JSONDecoder().decode(EngineStrength.self, from: Data(#"{"level": 99}"#.utf8))
+        try #require(low == EngineStrength(level: 1))
+        #expect(high == EngineStrength(level: 8))
+        #expect(low.elo == 1320)
+    }
 }
 
 @Suite struct SavedGameTests {

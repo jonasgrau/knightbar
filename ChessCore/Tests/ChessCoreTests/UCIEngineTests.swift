@@ -22,6 +22,32 @@ import Testing
         await #expect(throws: EngineError.timeout) { try await engine.start() }
     }
 
+    @Test func failedStartEndsTheEngineProcess() async {
+        let transport = FakeEngineTransport { _ in [] }
+        let engine = UCIEngine(transport: transport, timeout: short)
+        await #expect(throws: EngineError.timeout) { try await engine.start() }
+        #expect(transport.wasTerminated)
+    }
+
+    @Test func busyEngineRejectsCommandsWithoutSendingThem() async throws {
+        // This engine never finishes a search, so the first bestMove stays pending.
+        let transport = FakeEngineTransport { command in
+            command.hasPrefix("go") ? [] : FakeEngineTransport.wellBehaved(command)
+        }
+        let engine = try await startedEngine(transport)
+        let search = Task { try await engine.bestMove(from: .start, moves: [], moveTime: .seconds(10)) }
+        while !transport.sent.contains(where: { $0.hasPrefix("go") }) { await Task.yield() }
+        let sentBefore = transport.sent
+
+        await #expect(throws: EngineError.busy) { try await engine.setStrength(EngineStrength(level: 1)) }
+        await #expect(throws: EngineError.busy) {
+            try await engine.bestMove(from: .start, moves: [Move(uci: "e2e4")!], moveTime: .seconds(1))
+        }
+        #expect(transport.sent == sentBefore)
+        search.cancel()
+        await engine.shutdown()
+    }
+
     @Test func startFailsWhenTheEngineExitsImmediately() async {
         let transport = FakeEngineTransport { _ in [] }
         transport.crash()

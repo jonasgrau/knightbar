@@ -66,6 +66,14 @@ extension Position {
             guard let square = Square(String(fields[3])),
                   square.rank == (sideToMove == .white ? 5 : 2)
             else { throw .invalidEnPassant }
+            // The pawn that just made the double step stands in front of the square, and the
+            // square and the one it came from are empty.
+            let mover = sideToMove.opposite
+            let direction = mover == .white ? 1 : -1
+            guard self[square] == nil,
+                  self[Square(file: square.file, rank: square.rank - direction)] == nil,
+                  self[Square(file: square.file, rank: square.rank + direction)] == Piece(color: mover, kind: .pawn)
+            else { throw .invalidEnPassant }
             enPassantSquare = square
         }
 
