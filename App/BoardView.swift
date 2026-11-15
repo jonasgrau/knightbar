@@ -45,8 +45,9 @@ struct BoardView<Model: BoardModel>: View {
     }
 
     @State private var drag: Drag?
-    /// Whether the current press has already been evaluated (even if no piece was picked up).
-    @State private var pressHandled = false
+    /// Where the current press started, once it has been evaluated (even if no piece was picked up).
+    /// A cancelled gesture never reaches `onEnded`, so a press with another start is a new one.
+    @State private var pressStart: CGPoint?
 
     var body: some View {
         GeometryReader { geometry in
@@ -68,6 +69,13 @@ struct BoardView<Model: BoardModel>: View {
         }
         .aspectRatio(1, contentMode: .fit)
         .clipShape(RoundedRectangle(cornerRadius: 4))
+        // Closing the popover can cancel a press without ending it.
+        .onDisappear { resetPress() }
+    }
+
+    private func resetPress() {
+        drag = nil
+        pressStart = nil
     }
 
     // MARK: - Drawing
@@ -174,8 +182,10 @@ struct BoardView<Model: BoardModel>: View {
     private func boardGesture(side: CGFloat) -> some Gesture {
         DragGesture(minimumDistance: 0, coordinateSpace: .local)
             .onChanged { value in
-                if !pressHandled {
-                    pressHandled = true
+                if pressStart != value.startLocation {
+                    // A new press; anything left from a cancelled one is dropped.
+                    drag = nil
+                    pressStart = value.startLocation
                     if let start = square(at: value.startLocation, side: side), model.canSelect(start) {
                         drag = Drag(
                             from: start,
@@ -191,10 +201,7 @@ struct BoardView<Model: BoardModel>: View {
                 }
             }
             .onEnded { value in
-                defer {
-                    drag = nil
-                    pressHandled = false
-                }
+                defer { resetPress() }
                 let start = square(at: value.startLocation, side: side)
                 let end = square(at: value.location, side: side)
                 guard let drag else {
