@@ -33,10 +33,6 @@ struct GameStatus: View {
                     Button("Retry", action: model.retryEngine).controlSize(.small)
                 }
             }
-            Text(model.matchSummary)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
         }
     }
 }

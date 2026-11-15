@@ -64,11 +64,6 @@ final class GameModel: BoardModel {
     var checkedKingSquare: Square? { session.checkedKingSquare }
     var hintSquares: [Square] { [] }
     var playsComputer: Bool { settings.opponent == .computer }
-    var matchSummary: String {
-        playsComputer
-            ? "Stockfish · Level \(settings.strength.level) · You play \(playerColor == .white ? "White" : "Black")"
-            : "Two players · Local game"
-    }
 
     // MARK: - Board input
 
