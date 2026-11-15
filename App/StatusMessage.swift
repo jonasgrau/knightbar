@@ -10,7 +10,14 @@ struct PopoverHeader<Status: View>: View {
     @ViewBuilder let status: Status
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        // Status on the left, mode switch on the right in the same row. A long status wraps
+        // below its first line while the switch stays at the top.
+        HStack(alignment: .top, spacing: 8) {
+            HStack(alignment: .firstTextBaseline, spacing: 6) {
+                status
+            }
+            .frame(maxWidth: .infinity, minHeight: 22, alignment: .leading)
+
             Picker("Mode", selection: $mode) {
                 Text("Play").tag(AppMode.play)
                 Text("Puzzle").tag(AppMode.puzzle)
@@ -20,13 +27,7 @@ struct PopoverHeader<Status: View>: View {
             .labelsHidden()
             .fixedSize()
             .controlSize(.small)
-            .frame(maxWidth: .infinity, alignment: .trailing)
             .frame(height: 22)
-
-            HStack(alignment: .firstTextBaseline, spacing: 6) {
-                status
-            }
-            .frame(maxWidth: .infinity, minHeight: 22, alignment: .leading)
         }
     }
 }

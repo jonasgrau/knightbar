@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Content of the popover: mode switch, full-width status, board and toolbar.
+/// Content of the popover: status with the mode switch beside it, board and toolbar.
 struct PopoverView: View {
     let game: GameModel
     let puzzles: PuzzleModel
