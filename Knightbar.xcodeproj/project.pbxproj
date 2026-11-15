@@ -147,7 +147,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "set -eu\nsrc=\"$SRCROOT/Vendor/stockfish\"\nif [ ! -x \"$src/stockfish\" ]; then\n    echo \"error: Stockfish is missing. Run scripts/fetch-stockfish.sh once, then build again.\"\n    exit 1\nfi\n\ndst=\"$BUILT_PRODUCTS_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/Stockfish\"\nmkdir -p \"$dst\"\n\n# The engine is copied unchanged and lives in Resources on purpose. Its Intel slice finds the\n# embedded network at a fixed place in the file, so re-signing the binary breaks it on Intel\n# Macs. As a resource it is sealed by the app signature without being signed again.\nif [ ! \"$dst/stockfish\" -nt \"$src/stockfish\" ]; then\n    cp -f \"$src/stockfish\" \"$dst/stockfish\"\nfi\ncp -f \"$src/Copying.txt\" \"$src/AUTHORS\" \"$dst/\"\n";
+			shellScript = "exec \"$SRCROOT/scripts/copy-stockfish.sh\"\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 

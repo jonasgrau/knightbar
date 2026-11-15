@@ -19,13 +19,15 @@ by `scripts/make-app-icon.swift`.
 
 The app ships the official Stockfish 19 chess engine as a separate executable and talks to it
 over the UCI protocol. Stockfish is licensed under the GNU General Public License, version 3
-(GPLv3). The engine, its licence text and its list of authors are in the app bundle under
-`Contents/Resources/Stockfish/`.
+(GPLv3). The engine, its neural network (`nn-1a298aa575a0.nnue`), its licence text and its
+list of authors are in the app bundle under `Contents/Resources/Stockfish/`.
 
 Source: <https://github.com/official-stockfish/Stockfish>
 
 The binary is not stored in this repository. `scripts/fetch-stockfish.sh` downloads the
-official release and verifies its checksum.
+official release and verifies its checksum. It also copies the network that is embedded in
+the release binary into a separate file, unchanged and checked against its published SHA-256,
+so that the engine can be code-signed. The engine itself is not modified, only signed.
 
 ## Online services
 
