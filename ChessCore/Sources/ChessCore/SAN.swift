@@ -23,7 +23,7 @@ extension Position {
 
         let after = applying(move)
         if after.isInCheck {
-            text += after.legalMoves().isEmpty ? "#" : "+"
+            text += after.isCheckmate ? "#" : "+"
         }
         return text
     }

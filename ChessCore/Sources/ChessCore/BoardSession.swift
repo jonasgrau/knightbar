@@ -17,8 +17,9 @@ public struct PendingPromotion: Hashable, Sendable {
 /// Colours not listed in `humanColors` are played by the engine through `playEngineMove(_:)`.
 public struct BoardSession: Sendable {
     public private(set) var game: Game
-    public private(set) var selectedSquare: Square?
-    public private(set) var pendingPromotion: PendingPromotion?
+    private var input = BoardInputState()
+    public var selectedSquare: Square? { input.selectedSquare }
+    public var pendingPromotion: PendingPromotion? { input.pendingPromotion }
     /// The colours moved through the board. Both colours means a two-player game.
     public var humanColors: Set<PieceColor> {
         didSet { clearInput() }
@@ -40,49 +41,37 @@ public struct BoardSession: Sendable {
 
     /// Squares the selected piece can move to.
     public var targetSquares: [Square] {
-        guard let selectedSquare else { return [] }
-        var seen = Set<Square>()
-        return game.legalMoves.filter { $0.from == selectedSquare && seen.insert($0.to).inserted }.map(\.to)
+        input.targetSquares(in: game.legalMoves)
     }
 
     /// Square of the king that is currently in check.
     public var checkedKingSquare: Square? {
-        let position = game.position
-        return position.isInCheck ? position.kingSquare(of: position.sideToMove) : nil
+        game.position.checkedKingSquare
     }
 
     /// Whether `square` holds a piece that may move now.
     public func canSelect(_ square: Square) -> Bool {
-        guard pendingPromotion == nil, isHumanTurn else { return false }
-        return game.position[square]?.color == game.position.sideToMove
+        input.canSelect(square, in: game.position, color: game.position.sideToMove, isEnabled: isHumanTurn)
     }
 
     /// Selects the piece on `square`. Returns `false` if there is no movable piece there.
     @discardableResult
     public mutating func select(_ square: Square) -> Bool {
-        guard canSelect(square) else { return false }
-        selectedSquare = square
-        return true
+        input.select(square, in: game.position, color: game.position.sideToMove, isEnabled: isHumanTurn)
     }
 
     public mutating func deselect() {
-        selectedSquare = nil
+        input.deselect()
     }
 
     /// A click on `square`: moves the selected piece there, selects one of the mover's pieces,
     /// or clears the selection.
     public mutating func tap(_ square: Square) {
-        guard pendingPromotion == nil else { return }
-        if let selectedSquare {
-            if square == selectedSquare {
-                deselect()
-            } else if targetSquares.contains(square) {
-                move(from: selectedSquare, to: square)
-            } else if !select(square) {
-                deselect()
-            }
-        } else {
-            select(square)
+        let action = input.tap(
+            square, in: game.position, legalMoves: game.legalMoves,
+            color: game.position.sideToMove, isEnabled: isHumanTurn)
+        if case .move(let from, let to) = action {
+            move(from: from, to: to)
         }
     }
 
@@ -92,25 +81,23 @@ public struct BoardSession: Sendable {
     /// it is kept in `pendingPromotion` and only played by `promote(to:)`.
     @discardableResult
     public mutating func move(from: Square, to: Square) -> Bool {
-        guard pendingPromotion == nil, isHumanTurn else { return false }
-        selectedSquare = nil
-        let candidates = game.legalMoves.filter { $0.from == from && $0.to == to }
-        guard let first = candidates.first else { return false }
-        if first.promotion != nil {
-            pendingPromotion = PendingPromotion(from: from, to: to, color: game.position.sideToMove)
+        switch input.prepareMove(
+            from: from, to: to, legalMoves: game.legalMoves,
+            promotionColor: game.position.sideToMove, isEnabled: isHumanTurn) {
+        case .move(let move):
+            return game.make(move)
+        case .promotion, .rejected:
             return false
         }
-        return game.make(first)
     }
 
     public mutating func promote(to kind: PieceKind) {
-        guard let pending = pendingPromotion else { return }
-        pendingPromotion = nil
-        game.make(Move(from: pending.from, to: pending.to, promotion: kind))
+        guard let move = input.promote(to: kind) else { return }
+        game.make(move)
     }
 
     public mutating func cancelPromotion() {
-        pendingPromotion = nil
+        input.cancelPromotion()
     }
 
     /// Plays the engine's reply. Returns `false` if it is not the engine's turn or the move is illegal.
@@ -156,7 +143,6 @@ public struct BoardSession: Sendable {
     }
 
     private mutating func clearInput() {
-        selectedSquare = nil
-        pendingPromotion = nil
+        input.clear()
     }
 }

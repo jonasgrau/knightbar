@@ -235,6 +235,34 @@ import Testing
         #expect(session.position == session.puzzle.position)
     }
 
+    @Test func pendingPromotionBlocksInputAndCancellationAllowsAnotherAttempt() throws {
+        let position = try Position(fen: "8/P7/8/8/8/8/7k/K7 w - - 0 1")
+        let puzzle = Puzzle(
+            source: .chessCom, id: "promotion", position: position,
+            solution: [mv("a7a8r")], url: URL(string: "https://www.chess.com/daily/test")!)
+        var session = PuzzleSession(puzzle: puzzle)
+        session.tap(sq("a7"))
+        #expect(session.targetSquares == [sq("a8")])
+        session.tap(sq("a8"))
+        let pending = session.pendingPromotion
+        #expect(pending != nil)
+        session.tap(sq("a1"))
+        let selected = session.select(sq("a1"))
+        let moved = session.move(from: sq("a1"), to: sq("b1"))
+        #expect(!selected)
+        #expect(!moved)
+        #expect(session.pendingPromotion == pending)
+        #expect(session.selectedSquare == nil)
+        session.cancelPromotion()
+        #expect(session.pendingPromotion == nil)
+        #expect(session.position == position)
+        session.tap(sq("a7"))
+        session.tap(sq("a8"))
+        session.promote(to: .rook)
+        #expect(session.state == .solved)
+        #expect(session.mistakes == 0)
+    }
+
     @Test func firstHintMarksThePieceAndTheSecondShowsTheMove() throws {
         var session = try chessComSession()
         #expect(session.hint == nil)

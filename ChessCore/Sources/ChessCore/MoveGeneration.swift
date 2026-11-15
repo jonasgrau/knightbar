@@ -66,6 +66,12 @@ extension Position {
     /// Whether the king of the side to move is in check.
     public var isInCheck: Bool { isKingAttacked(sideToMove) }
 
+    /// Whether the side to move is checkmated.
+    public var isCheckmate: Bool { isInCheck && legalMoves().isEmpty }
+
+    /// Square of the side to move's king while it is in check.
+    var checkedKingSquare: Square? { isInCheck ? kingSquare(of: sideToMove) : nil }
+
     func isKingAttacked(_ color: PieceColor) -> Bool {
         guard let king = kingSquare(of: color) else { return false }
         return isAttacked(king, by: color.opposite)

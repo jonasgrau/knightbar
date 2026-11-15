@@ -16,8 +16,9 @@ public struct PuzzleSession: Sendable {
 
     public let puzzle: Puzzle
     public private(set) var state = State.solving
-    public private(set) var selectedSquare: Square?
-    public private(set) var pendingPromotion: PendingPromotion?
+    private var input = BoardInputState()
+    public var selectedSquare: Square? { input.selectedSquare }
+    public var pendingPromotion: PendingPromotion? { input.pendingPromotion }
     /// Number of wrong moves tried so far.
     public private(set) var mistakes = 0
     /// Whether the most recent attempt was a wrong move.
@@ -40,69 +41,67 @@ public struct PuzzleSession: Sendable {
     public var lastMove: Move? { game.lastMove ?? puzzle.lastMove }
 
     public var targetSquares: [Square] {
-        guard let selectedSquare else { return [] }
-        var seen = Set<Square>()
-        return position.legalMoves(from: selectedSquare).filter { seen.insert($0.to).inserted }.map(\.to)
+        // Read on every redraw, so only the selected piece's moves are generated.
+        input.targetSquares(in: input.selectedSquare.map { position.legalMoves(from: $0) } ?? [])
     }
 
     public var checkedKingSquare: Square? {
-        position.isInCheck ? position.kingSquare(of: position.sideToMove) : nil
+        position.checkedKingSquare
     }
 
     public func canSelect(_ square: Square) -> Bool {
-        guard state == .solving, pendingPromotion == nil else { return false }
-        return position[square]?.color == puzzle.solverColor
+        input.canSelect(square, in: position, color: puzzle.solverColor, isEnabled: state == .solving)
     }
 
     @discardableResult
     public mutating func select(_ square: Square) -> Bool {
-        guard canSelect(square) else { return false }
-        selectedSquare = square
+        guard input.select(square, in: position, color: puzzle.solverColor, isEnabled: state == .solving) else {
+            return false
+        }
         lastAttemptFailed = false
         return true
     }
 
     public mutating func deselect() {
-        selectedSquare = nil
+        input.deselect()
     }
 
     public mutating func tap(_ square: Square) {
-        guard pendingPromotion == nil else { return }
-        if let selectedSquare {
-            if square == selectedSquare {
-                deselect()
-            } else if targetSquares.contains(square) {
-                move(from: selectedSquare, to: square)
-            } else if !select(square) {
-                deselect()
-            }
-        } else {
-            select(square)
+        let position = self.position
+        let action = input.tap(
+            square, in: position, legalMoves: position.legalMoves(),
+            color: puzzle.solverColor, isEnabled: state == .solving)
+        switch action {
+        case .selected:
+            lastAttemptFailed = false
+        case .move(let from, let to):
+            move(from: from, to: to)
+        case .ignored, .deselected:
+            break
         }
     }
 
     /// Tries the move as the solver's next move. Returns `true` if it was correct and has been played.
     @discardableResult
     public mutating func move(from: Square, to: Square) -> Bool {
-        guard state == .solving, pendingPromotion == nil else { return false }
-        selectedSquare = nil
-        let candidates = position.legalMoves().filter { $0.from == from && $0.to == to }
-        guard let first = candidates.first else { return false }
-        if first.promotion != nil {
-            pendingPromotion = PendingPromotion(from: from, to: to, color: puzzle.solverColor)
+        let position = self.position
+        switch input.prepareMove(
+            from: from, to: to, legalMoves: position.legalMoves(),
+            promotionColor: puzzle.solverColor, isEnabled: state == .solving) {
+        case .move(let move):
+            return attempt(move)
+        case .promotion, .rejected:
             return false
         }
-        return attempt(first)
     }
 
     public mutating func promote(to kind: PieceKind) {
-        guard let pending = pendingPromotion else { return }
-        pendingPromotion = nil
-        attempt(Move(from: pending.from, to: pending.to, promotion: kind))
+        guard let move = input.promote(to: kind) else { return }
+        attempt(move)
     }
 
     public mutating func cancelPromotion() {
-        pendingPromotion = nil
+        input.cancelPromotion()
     }
 
     @discardableResult
@@ -145,9 +144,4 @@ public struct PuzzleSession: Sendable {
     public mutating func restart() {
         self = PuzzleSession(puzzle: puzzle)
     }
-}
-
-extension Position {
-    /// Whether the side to move is checkmated.
-    public var isCheckmate: Bool { isInCheck && legalMoves().isEmpty }
 }
