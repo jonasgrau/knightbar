@@ -89,8 +89,7 @@ struct SettingsView: View {
                     .disabled(updates.isChecking)
                 if updates.isChecking {
                     ProgressView()
-                        .controlSize(.small)
-                        .scaleEffect(0.6)
+                        .controlSize(.mini)
                 }
             }
         }

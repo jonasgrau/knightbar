@@ -17,7 +17,6 @@ final class GameModel: BoardModel {
     private(set) var isThinking = false
     /// Set when the engine could not be started or stopped answering.
     private(set) var engineFailed = false
-    var confirmsNewGame = false
     private var isApplyingSetup = false
 
     private let store: SavedGameStore
@@ -101,16 +100,10 @@ final class GameModel: BoardModel {
         gameChanged()
     }
 
-    func requestNewGame() {
-        if !game.moves.isEmpty && !game.status.isOver {
-            confirmsNewGame = true
-        } else {
-            newGame()
-        }
-    }
+    /// Whether starting a new game would throw away a game that is still being played.
+    var replacesGameInProgress: Bool { !game.moves.isEmpty && !game.status.isOver }
 
     func newGame() {
-        confirmsNewGame = false
         cancelSearch()
         engineFailed = false
         playerColor = settings.colorChoice.resolved()

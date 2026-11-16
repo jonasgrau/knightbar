@@ -80,10 +80,13 @@ private struct ChessComSection: View {
                             .frame(width: 7, height: 7)
                         VStack(alignment: .leading, spacing: 1) {
                             Text("Daily game – your move")
-                            if let left = game.timeLeftText(at: .now) {
-                                Text(left)
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
+                            // Redrawn every minute so the remaining time does not go stale.
+                            TimelineView(.everyMinute) { context in
+                                if let left = game.timeLeftText(at: context.date) {
+                                    Text(left)
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
                             }
                         }
                         Spacer()
@@ -117,8 +120,7 @@ struct OnlineStatus: View {
         StatusMessage(text: text, isError: lichess.message != nil)
         if lichess.isSigningIn || (lichess.openGameInfo != nil && lichess.openGame == nil) {
             ProgressView()
-                .controlSize(.small)
-                .scaleEffect(0.7)
+                .controlSize(.mini)
         }
     }
 }
@@ -139,7 +141,8 @@ struct OnlineToolbar: View {
                 Menu("Account") {
                     Button("Log Out of Lichess", action: lichess.signOut)
                 }
-                .menuStyle(.borderlessButton)
+                .menuStyle(.button)
+                .buttonStyle(.borderless)
                 .fixedSize()
             }
         }

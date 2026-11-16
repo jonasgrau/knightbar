@@ -174,7 +174,8 @@ struct LichessGameToolbar: View {
                 Button("Resign…", role: .destructive) { confirmsResign = true }
                     .disabled(isOver)
             }
-            .menuStyle(.borderlessButton)
+            .menuStyle(.button)
+            .buttonStyle(.borderless)
             .fixedSize()
             .help("Online game actions")
         }

@@ -50,7 +50,8 @@ final class UpdateModel {
 
         loop = Task { [weak self] in
             while !Task.isCancelled {
-                self?.checkIfDue()
+                // Hold the model only for the call, not across the pause; stop once it is gone.
+                if let self { self.checkIfDue() } else { return }
                 try? await Task.sleep(for: .seconds(3600))
             }
         }

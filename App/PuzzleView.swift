@@ -64,7 +64,8 @@ struct PuzzleToolbar: View {
                    action: model.openInBrowser)
                 .disabled(model.session == nil)
         }
-        .menuStyle(.borderlessButton)
+        .menuStyle(.button)
+        .buttonStyle(.borderless)
         .fixedSize()
         .help("Puzzle actions")
     }

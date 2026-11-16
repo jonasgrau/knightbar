@@ -53,7 +53,8 @@ struct PopoverView: View {
                     Image(systemName: "gearshape")
                         .frame(width: 16)
                 }
-                .menuStyle(.borderlessButton)
+                .menuStyle(.button)
+                .buttonStyle(.borderless)
                 .fixedSize()
                 .help(updates.available == nil ? "App menu" : "App menu – update available")
                 .accessibilityLabel("App menu")

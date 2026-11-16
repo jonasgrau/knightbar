@@ -43,7 +43,8 @@ final class ChessComModel {
         username = defaults.string(forKey: Self.usernameKey) ?? ""
         pollTask = Task { [weak self] in
             while !Task.isCancelled {
-                self?.refresh()
+                // Hold the model only for the call, not across the pause; stop once it is gone.
+                if let self { self.refresh() } else { return }
                 try? await Task.sleep(for: pollInterval)
             }
         }

@@ -27,7 +27,7 @@ struct GameStatus: View {
                 StatusMessage(text: model.statusText,
                               isError: model.playsComputer && model.engineFailed && !model.game.status.isOver)
                 if model.isThinking {
-                    ProgressView().controlSize(.small).scaleEffect(0.7)
+                    ProgressView().controlSize(.mini)
                 }
                 if model.playsComputer && model.engineFailed && !model.game.status.isOver {
                     Button("Retry", action: model.retryEngine).controlSize(.small)
@@ -38,7 +38,7 @@ struct GameStatus: View {
 }
 
 struct GameToolbar: View {
-    @Bindable var model: GameModel
+    let model: GameModel
     @State private var showsSetup = false
     @State private var setup = MatchSettings()
 
@@ -50,7 +50,7 @@ struct GameToolbar: View {
             .fixedSize()
             .popover(isPresented: $showsSetup) {
                 NewGameSetup(settings: $setup,
-                             replacesGame: !model.game.moves.isEmpty && !model.game.status.isOver,
+                             replacesGame: model.replacesGameInProgress,
                              onCancel: { showsSetup = false }) {
                     model.startNewGame(settings: setup)
                     showsSetup = false
@@ -69,7 +69,8 @@ struct GameToolbar: View {
             Button("Resign", role: .destructive, action: model.resign)
                 .disabled(model.game.status.isOver)
         }
-        .menuStyle(.borderlessButton)
+        .menuStyle(.button)
+        .buttonStyle(.borderless)
         .fixedSize()
         .help("Game actions, analysis and export")
     }

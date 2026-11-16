@@ -18,38 +18,24 @@ func newGameSafetyRegressions() throws {
     model.startNewGame(settings: setup)
     try requireRegression(model.settings == setup && !model.playsComputer,
                           "New Game did not apply the selected opponent and strength")
-    model.settings.opponent = .human
-    model.requestNewGame()
-    try requireRegression(!model.confirmsNewGame && model.game.moves.isEmpty,
-                          "An untouched game should restart immediately")
+    try requireRegression(!model.replacesGameInProgress && model.game.moves.isEmpty,
+                          "An untouched game should not ask before it is replaced")
     model.move(from: Square("e2")!, to: Square("e4")!)
     let moves = model.game.moves
-    let saved = try Data(contentsOf: store.fileURL)
-    model.requestNewGame()
-    try requireRegression(model.confirmsNewGame && model.game.moves == moves,
-                          "Requesting a new game replaced active progress before confirmation")
-    try requireRegression(try Data(contentsOf: store.fileURL) == saved,
-                          "Requesting a new game overwrote the save")
-    model.confirmsNewGame = false
-    try requireRegression(model.game.moves == moves && (try Data(contentsOf: store.fileURL)) == saved,
-                          "Cancelling New Game changed the board or save")
+    try requireRegression(model.replacesGameInProgress,
+                          "A game in progress should warn before New Game replaces it")
 
     // A restored game receives the same protection as one played in this session.
     let restored = GameModel(store: store, defaults: defaults)
-    restored.requestNewGame()
-    try requireRegression(restored.confirmsNewGame && restored.game.moves == moves,
-                          "Restored progress was replaced before confirmation")
+    try requireRegression(restored.replacesGameInProgress && restored.game.moves == moves,
+                          "Restored progress was not protected")
 
-    model.requestNewGame()
-    model.newGame()
-    try requireRegression(!model.confirmsNewGame && model.game.moves.isEmpty,
-                          "Confirmed New Game did not reset the session")
-    try requireRegression(try store.load()?.moves.isEmpty == true, "Confirmed game was not saved")
-    model.move(from: Square("e2")!, to: Square("e4")!)
     model.resign()
-    model.requestNewGame()
-    try requireRegression(!model.confirmsNewGame && model.game.moves.isEmpty,
-                          "A finished game should restart immediately")
+    try requireRegression(!model.replacesGameInProgress,
+                          "A finished game should not ask before it is replaced")
+    model.newGame()
+    try requireRegression(model.game.moves.isEmpty, "New Game did not reset the session")
+    try requireRegression(try store.load()?.moves.isEmpty == true, "The new game was not saved")
     model.move(from: Square("e2")!, to: Square("e4")!)
     setup.strength = EngineStrength(level: 8)
     setup.colorChoice = .black
@@ -59,5 +45,5 @@ func newGameSafetyRegressions() throws {
     let restarted = GameModel(store: store, defaults: defaults)
     try requireRegression(restarted.settings == setup && restarted.playerColor == .black && restarted.game.moves.isEmpty,
                           "New-game setup was not retained after restoring")
-    print("PASS: fresh, active, cancelled, restored, confirmed, finished and configured New Game flows")
+    print("PASS: fresh, active, restored, finished and configured New Game flows")
 }
